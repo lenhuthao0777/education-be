@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  password       String
+  active         Boolean          @default(true)
+  roleId         String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  GradesOfCourse GradesOfCourse[]
+  Notify         Notify[]
+  profile        Profile?
+  token          Token?
+  role           Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([id, roleId])
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  type      RoleType @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User[]
+}
+
+model Profile {
+  id            String          @id @default(uuid())
+  userCode      String?
+  firstName     String?
+  lastName      String?
+  birthDay      String?
+  fatherName    String?
+  motherName    String?
+  address       String?
+  birthPlace    String?
+  img           String?
+  phone         String?
+  userId        String          @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  memberOnClass MemberOnClass[]
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  class     Class[]
+}
+
+model Class {
+  id            String          @id @default(uuid())
+  name          String
+  quantity      Int
+  startDate     String?
+  endDate       String?
+  year          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  blockId       String
+  block         Block           @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  memberOnClass MemberOnClass[]
+}
+
+model MemberOnClass {
+  id                String   @id @default(uuid())
+  isHomeroomTeacher Boolean  @default(false)
+  profileId         String
+  classId           String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  class             Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([classId])
+}
+
+model Course {
+  id             String           @id @default(uuid())
+  name           String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  GradesOfCourse GradesOfCourse[]
+}
+
+model Grades {
+  id               String           @id @default(uuid())
+  semester         String
+  scoreFactorOne   Int?             @default(0)
+  scoreFactorTwo   Int?             @default(0)
+  scoreFactorThree Int?             @default(0)
+  oralExamination  Int?             @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  GradesOfCourse   GradesOfCourse[]
+}
+
+model GradesOfCourse {
+  id       String @id @default(uuid())
+  courseId String
+  gradesId String
+  userId   String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  grades   Grades @relation(fields: [gradesId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([gradesId])
+}
+
+model Notify {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Token {
+  id           String @id @default(uuid())
+  token        String
+  refreshToken String
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum RoleType {
+  STUDENT
+  TEACHER
+  ADMIN
+}
