@@ -68,6 +68,8 @@ export class UserService {
       res.cookie('access_token', token, {
         httpOnly: true,
         maxAge: 6000,
+        sameSite: 'lax',
+        secure: true,
       })
 
       return {
