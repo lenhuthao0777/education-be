@@ -5,12 +5,13 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import { hash, compare } from 'bcrypt'
+import { JwtService } from '@nestjs/jwt'
+import { Response } from 'express'
 
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { PrismaService } from 'src/providers/prisma'
-import { Response } from 'express'
-import { JwtService } from '@nestjs/jwt'
+import { Filters } from './dto/filter-user.dto'
 
 @Injectable()
 export class UserService {
@@ -97,19 +98,122 @@ export class UserService {
     }
   }
 
-  findAll() {
-    return `This action returns all user`
+  async users(filters: Filters) {
+    try {
+      let userCount = 0
+
+      userCount = await this.prisma.user.count({
+        where: {
+          AND: [
+            {
+              email: {
+                contains: filters.email,
+              },
+            },
+            {
+              roleId: filters.roleId,
+            },
+          ],
+        },
+      })
+
+      const users = await this.prisma.user.findMany({
+        where: {
+          AND: [
+            {
+              email: {
+                contains: filters.email,
+              },
+            },
+            {
+              roleId: filters.roleId,
+            },
+          ],
+        },
+        take: Number(filters.limit),
+        skip: (Number(filters.page) - 1) * Number(filters.limit),
+        orderBy: {
+          createdAt: 'asc',
+        },
+        select: {
+          id: true,
+          email: true,
+          active: true,
+          role: {
+            select: {
+              id: true,
+              type: true,
+            },
+          },
+          profile: {
+            select: {
+              id: true,
+              lastName: true,
+              firstName: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+
+      return {
+        data: users,
+        totalPage: Math.ceil(userCount / Number(filters.limit)),
+        page: filters.page,
+        limit: filters.limit,
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`
+  async user(email: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+          email: true,
+          role: {
+            select: {
+              id: true,
+              type: true,
+            },
+          },
+        },
+      })
+      return user
+    } catch (error) {
+      throw new InternalServerErrorException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
+    }
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`
+  async remove(id: string) {
+    try {
+      await this.prisma.user.delete({
+        where: {
+          id,
+        },
+      })
+      return 'Delete success!'
+    } catch (error) {
+      throw new InternalServerErrorException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
+    }
   }
 }

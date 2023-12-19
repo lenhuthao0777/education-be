@@ -7,13 +7,17 @@ import {
   Param,
   Delete,
   Res,
+  UseGuards,
+  Query,
 } from '@nestjs/common'
 import { UserService } from './user.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { Response } from 'express'
+import { Filters } from './dto/filter-user.dto'
+import { AuthGuard } from './auth.guard'
 
-@Controller('api/v1/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -27,25 +31,20 @@ export class UserController {
     return this.userService.login(res, input)
   }
 
-  @Post('/test')
-  findAll(@Res({ passthrough: true }) res: Response, @Body() input: any) {
-    res.cookie('token', 'test_token', {
-      httpOnly: true,
-      maxAge: 6000,
-    })
-    console.log(input)
+  @Get()
+  users(@Query() filters: any) {
+    return this.userService.users(filters)
+  }
 
-    return this.userService.findAll()
+  @UseGuards(AuthGuard)
+  @Get(':email')
+  user(@Param('email') email: string) {
+    return this.userService.user(email)
   }
 
   @Get('/logout')
   logout(@Res({ passthrough: true }) res: Response) {
     return this.userService.logout(res)
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id)
   }
 
   @Patch(':id')
@@ -55,6 +54,6 @@ export class UserController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.userService.remove(+id)
+    return this.userService.remove(id)
   }
 }
