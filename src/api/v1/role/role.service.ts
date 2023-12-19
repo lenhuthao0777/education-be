@@ -1,27 +1,21 @@
-import { Injectable } from '@nestjs/common'
-import { CreateRoleDto } from './dto/create-role.dto'
-import { UpdateRoleDto } from './dto/update-role.dto'
-
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common'
+import { PrismaService } from 'src/providers/prisma'
 @Injectable()
 export class RoleService {
-  async create(createRoleDto: CreateRoleDto) {
+  constructor(private readonly prisma: PrismaService) {}
+  async roles() {
     try {
-    } catch (error) {}
-  }
-
-  findAll() {
-    return `This action returns all role`
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} role`
-  }
-
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} role`
+      const roles = this.prisma.role.findMany()
+      return roles
+    } catch (error) {
+      throw new InternalServerErrorException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
+    }
   }
 }

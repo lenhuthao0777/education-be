@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt'
 
 import { PrismaService } from 'src/providers/prisma'
 import { UserModule, RoleModule } from 'src/api/index'
+import { SECRET_KEY } from 'src/constants'
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -11,9 +12,9 @@ import { UserModule, RoleModule } from 'src/api/index'
     }),
     JwtModule.register({
       global: true,
-      secret: 'school',
+      secret: SECRET_KEY,
       signOptions: {
-        expiresIn: '60s',
+        expiresIn: '3600s',
       },
     }),
     UserModule,
