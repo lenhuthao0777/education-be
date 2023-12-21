@@ -69,8 +69,9 @@ export class UserService {
       res.cookie('access_token', token, {
         httpOnly: true,
         maxAge: 6000,
-        sameSite: 'lax',
-        secure: true,
+        sameSite: process.env.NODE_ENV === 'development' ? true : 'none',
+        secure: process.env.NODE_ENV === 'production',
+        domain: '/',
       })
 
       return {
